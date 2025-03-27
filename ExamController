@@ -1,0 +1,49 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+class ExamController extends Controller
+{
+    public function index()
+    {
+        return Exam::all();
+    }
+
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'student_id' => 'required|exists:students,id',
+            'classroom' => 'required|string',
+            'subject' => 'required|string',
+            'date' => 'required|date_format:Y-m-d H:i',
+        ], [
+            'student_id.exists' => 'A megadott diák nem létezik.',
+            'date.date_format' => 'A dátum formátuma hibás (YYYY-MM-DD HH:MM).'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        Exam::create($request->all());
+
+        return ['uzenet' => 'Sikeres vizsgakiírás!'];
+    }
+
+    public function destroy(Request $request)
+    {
+        $id = $request->query('id');
+
+        $exam = Exam::find($id);
+
+        if (!$exam) {
+            return response()->json(['uzenet' => 'A megadott vizsga nem található!'], 404);
+        }
+
+        $exam->delete();
+
+        return ['uzenet' => 'Vizsga törölve'];
+    }
+}
